@@ -1,0 +1,108 @@
+---
+title: "Lab2"
+author: "Fan Han"
+date: "2/26/2019"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Task-1
+Questions:  
+
+1. Explain the difference between NameNode and DataNode?  
+Namenode holds the metadata which specify where the data are stored on the slave nodes. DataNode holds the working data  
+
+2. What are the advantages of using HDFS?  
+HDFS (Hadoop distributed filesystem) can split the data onto multiple nodes and monitor the data through master node. This  means that if some of the slave nodes fail the master node could quickly initialize the application of the data copy that are stored on other nodes.  
+
+3. Explain the last three commands?  
+\# print class path that is needed for Hadoop jar and the required libraries. There are two filesystems now and this lists the hadoop files under /  
+/hadoop/bin/hdfs dfs –ls /  
+ \# create a folder that holds test-data and this folder is created in hadoop   filesystem  
+/hadoop/bin/hdfs dfs –mkdir /test-data
+\# Now we are listing the files in hadoop filesystem under /  
+/hadoop/bin/hdfs dfs –ls /
+
+# Task-2
+Question:  
+
+1. Explain the command(s) you have used to upload the data files in HDFS?  
+/hadoop/bin/hdfs dfs -put eBooks /test-data  
+This command means the files in local machine filesystems will be moved into the folder in hadoop filesystem  
+
+2. Briefly explain the console’s output and the results of the word count
+application (look at the result file produced by the Hadoop job).  
+>  File System Counters
+		FILE: Number of bytes read=3461245
+		FILE: Number of bytes written=5863406
+		FILE: Number of read operations=0
+		FILE: Number of large read operations=0
+		FILE: Number of write operations=0
+		HDFS: Number of bytes read=3080966
+		HDFS: Number of bytes written=1170767
+		HDFS: Number of read operations=22
+		HDFS: Number of large read operations=0
+		HDFS: Number of write operations=5
+	Map-Reduce Framework
+		Map input records=16808
+		Map output records=119503
+		Map output bytes=2085316
+		Map output materialized bytes=1286132
+		Input split bytes=243
+		Combine input records=119503
+		Combine output records=27485
+		Reduce input groups=27470
+		Reduce shuffle bytes=1286132
+		Reduce input records=27485
+		Reduce output records=27470
+		Spilled Records=54970
+		Shuffled Maps =2
+		Failed Shuffles=0
+		Merged Map outputs=2
+		GC time elapsed (ms)=10
+		Total committed heap usage (bytes)=1071120384
+	Shuffle Errors
+		BAD_ID=0
+		CONNECTION=0
+		IO_ERROR=0
+		WRONG_LENGTH=0
+		WRONG_MAP=0
+		WRONG_REDUCE=0
+	File Input Format Counters
+		Bytes Read=1203198
+	File Output Format Counters
+		Bytes Written=1170767  
+
+The result is a binary file.  
+
+3. Explain the application’s output? 
+There are two outputs. One is an indicator to show that the application is executed successfully. The other one is a binary file that contains the result of wordcount.  
+
+# Task-3
+/hadoop/bin/hadoop jar /hadoop/share/hadoop/mapreduce/hadoop-mapreduce-examples-2.7.3.jar pi 9 7
+Estimated value of Pi is 3.30158730158730158730  
+
+Question:  
+
+1. Explain the command you have used to run the PI example?  
+This command is an example MapReduce of hadoop which uses a quasi-Monte Carlo method to estimate pi. The first number is the nummber of maps in the Mapper and the second number is the sample per map.  
+2. Briefly explain the implementation available in the above-mentioned link.  
+It introduces that pi in this Hadoop example MapReduce program is calculated using a quasi-Monte Carlo method. For the Mapper, it generates N maps in a unit square and count the inside/outside points of the square. Reducer accumulates the points from the Mapper and measure the pi with the formula pi = 4*(numInside/numTotal)  
+
+# Task-4
+Question:  
+
+1. What is Hadoop streaming?  
+Hadoop streaming adopts any other languages into java-executable files so the applications are not language-limited.  
+
+2. Can we use Hadoop streaming with R scripts?  
+Of course we can.  
+
+3. How many mappers and reducer have been used while running the task-
+4? can we change the number of mappers?  
+We used only one mapper and one reducer here. We can use multiple mappers and reducers if the rescoure on the cloud allows.

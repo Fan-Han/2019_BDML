@@ -1,0 +1,158 @@
+---
+title: "Lab5-6"
+author: "Fan Han"
+date: "3/1/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Assignment 1: Comparison of prediction properties of the Random Forests and Partial Least Squares methods
+```{r}
+# load the meat data
+meat <- read.csv("tecator.csv", header=T)
+# remove extra columns
+library(tidyverse)
+meat <- meat %>% select(-c("Sample", "Protein", "Moisture"))
+# spilt the data into traning and test data
+meat_train <- meat[1:150,]
+meat_test <- meat[151:215,]
+```
+
+* 1a  
+```{r, }
+library(tree)
+tree_model <- tree(Fat~., data = meat_train)
+summary(tree_model)
+{plot(tree_model)
+text(tree_model, pretty=0)
+}
+cvtree_model <- cv.tree(tree_model)
+plot(cvtree_model$size, cvtree_model$dev, type="b", cex=0.5)
+```
+
+* 1b
+```{r}
+library(randomForest)
+RF_model <- randomForest(Fat~., data = meat_train, importance=T, ntree=1000)
+RF_model
+varImpPlot(RF_model, main = "", cex=0.5)
+```
+
+* The Tree Regression model uses only 10 variables in the tree construction and this could tell from the cross validation. Random Forest model takes more variables into account and suggests that Chr41, Chr42, Chr40 gave most error. The Random Forest model could explain 67% variance.
+
+```{r}
+# prediction with test data
+tree_predict <- predict(tree_model, meat_test)
+tree_MSE <- mean((tree_predict - meat_test$Fat)^2)
+tree_MSE
+
+RF_predict <- predict(RF_model, meat_test)
+RF_MSE <- mean((RF_predict - meat_test$Fat)^2)
+RF_MSE
+```
+
+* It shows that Random Forest model gives a lower MSE which means it fits better for this dataset.
+
+* 1c  
+```{r}
+# Partial Least Squares analysis
+library(pls)
+PLS_model <- plsr(Fat~., data = meat_train, validation="CV")
+cor_train <- cor(meat_train)
+#summary(PLS_model)
+plot(RMSEP(PLS_model), legendpos="topright")
+
+PLS_predict <- predict(PLS_model, meat_test, ncomp = 15)
+PLS_MSE <- mean((PLS_predict - meat_test$Fat)^2)
+PLS_MSE
+```
+
+* In PLS model, the lowest CV occurrs when there are 15 components. All the channel variables are highly correlated. That's why PLS model gives a much lower MSE than Tree Regression and Random Forest models.
+
+# Assignment 2: Create a spam filter using Support Vector Machines with different kernels
+```{r}
+# load data
+spam <- read.csv("spambase.csv", header=T)
+# change response to factor
+spam$Spam <- as.factor(spam$Spam)
+# split the data randomly
+train_row <- sample.int(nrow(spam), size = nrow(spam)*0.7, replace = F)
+spam_train <- spam[train_row,]
+spam_test <- spam[-train_row,]
+```
+
+* 2a
+```{r}
+library(e1071)
+# SVM linear kernal
+spam_svm <- tune(svm, Spam ~., data = spam_train, kernel="linear", ranges = list(cost=c(1,5,10,20,50)))
+spam_svm_linear <- spam_svm$best.model
+summary(spam_svm_linear)
+spam_predict <- predict(spam_svm_linear, spam_test)
+# summary prediction
+predictsum <- table(predict=spam_predict, truth=spam_test$Spam)
+# calculate PER
+spam_error <- sum(predictsum[1,2]+predictsum[2,1])/sum(predictsum)
+spam_error
+```
+
+* 2b  
+```{r}
+# radial kernal
+spam_radial <- tune(svm, Spam ~., data = spam_train, kernel="radial", ranges = list(cost=c(1,5,10,20,50)))
+summary(spam_radial)
+radial_best <- spam_radial$best.model
+summary(radial_best)
+radial_predict <- predict(radial_best, spam_test)
+radial_predict_sum <-  table(predict=radial_predict, truth=spam_test$Spam)
+radial_error <- sum(radial_predict_sum[1,2]+radial_predict_sum[2,1])/sum(radial_predict_sum)
+radial_error
+```
+* Discussion: Using linear kernal, the best cost is 50, and the prediction error is 0.07. Using radial kernal, the best cost is 5 and the error rate is 0.06. It looks like radial kernal performs slighly better than linear kernal for this dataset.
+
+# Assignment 3: Model based clustering
+```{r}
+seed_data <- read.csv(url("http://archive.ics.uci.edu/ml/machine-learning-databases/00236/seeds_dataset.txt"), sep="\t", header=F)
+# remove missing values and the last column
+library(tidyverse)
+real_class <- seed_data$V8
+clean_data <- seed_data  %>% select(-V8) %>% drop_na()
+# scale the data first
+scale_data <- scale(clean_data)
+
+# clustering
+library(mclust)
+BIC <- mclustBIC(scale_data)
+plot(BIC,legendArgs = list(cex=0.5,x = "topright"))
+summary(BIC)
+model_cluster <- Mclust(scale_data, x = BIC)
+summary(model_cluster)
+# The observation in each cluster
+cluster1 <- names(model_cluster$classification[model_cluster$classification==1])
+cluster2 <- names(model_cluster$classification[model_cluster$classification==2])
+cluster3 <- names(model_cluster$classification[model_cluster$classification==3])
+plot(model_cluster, what="classification")
+# compare the cluster to read classification
+length(which(model_cluster$classification == real_class))/length(real_class)
+```
+
+* Conclusion: The best (lowest) three BIC supports 3 clusters, indicating the measurements can be distinguished to 3 clusters. The measurements in each cluster are:  
+cluster1
+```{r, echo=FALSE}
+cluster1
+```
+
+cluster2
+```{r, echo=FALSE}
+cluster2
+```
+
+cluster3
+```{r, echo=FALSE}
+cluster3
+```
+
+If we compare this classification with the real observation, about 72% observations are classified into the correct clusters.

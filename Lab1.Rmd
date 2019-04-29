@@ -1,0 +1,62 @@
+---
+title: "Lab1"
+author: "Fan Han"
+date: "2/25/2019"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+# Task-1
+Questions:  
+
+1. What is the difference between the local network (SNIC 2019/10-9 Internal IPv4 Network) and external network (public)?  
+The local network is the IP address the the cluster assigns to the user and external network. It is like the internal router, and it cannot be accessed out of the cluster. External network has no limitation for access.  
+
+2. Can a VM access the Internet without assigning a floating IP? Explain the role of the floating IP.  
+No. Floating IP allows the connection between the external network and the cloud.  
+
+3. What is the difference between an Image, Instance and a Snapshot?  
+An image is a compressed operation system. It is the default copy which has nothing installed on it. An instance is a virtual machine working inside the cloud and associated with user account. Snapshot is a customized version of image, but it only holds for a given status of image. It is an exact copy of the image in which users have installed the programs at the given moment. But snapshot cannot to be migranted onto other cloud platforms.  
+
+# Task-2
+Questions:  
+
+1. What is the technology used to provide volumes in OpenStack? Is it RAID or LVM?  
+LVM  
+
+2. What is LVM? Explain the advantage(s) of using LVM?  
+LVM is logical volume manager. The advatage of using this technology is that LVM is storage distributed across multiple physical disks and it helps performance.  
+3. Can one volume be attached to multiple instances or vice versa?  
+One volume can be only attached to one instance at the same time. Because mounting means that the file formats of the volumes are adjusted to the one that can be recognized by the given machine. Attaching the same colume to another machine would cause problem on the files. But one instance can attach multiple volumes.  
+
+# Task-3
+* Public url of the container "Lab1" is https://hpc2n.cloud.snic.se/project/containers/container/Lab1  
+
+Questions:  
+
+1. Explain the difference between a folder on your UNIX filesystem and a pseudo-folder inside a container?  
+A folder on the Unix is under a hierachical filesystem but the psudo-folder inside container is treated as an object.  
+
+2. The corresponding system in Amazon Web Services is called "S3". Is there a principal difference between an "S3 bucket" and a container in OpenStack's object store?  
+They are basically the same.  
+
+3. What is the name of the OpenStack service providing Object storage?  
+Swift
+
+# Task-4
+Questions:  
+
+1. Examine the code in app.py. What Python framework is used to provide the (extremely simplistic) RESTful service?  
+Flask  
+
+2. What problem does “screen” solve?  
+screen allows multiple terminal sessions within the same console.  
+
+3. Is SSC a Public, Community, Private or Hybrid cloud, and why?  
+SSC is s community cloud because it provides service only towards Swedish research. 

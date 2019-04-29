@@ -1,0 +1,272 @@
+---
+title: "Lab1-2_BDML_2019"
+author: "Fan Han"
+date: "2/27/2019"
+output:
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message=FALSE)
+```
+
+# Assignment1: Introductory R session
+## 1.2 A first R Session
+```{r}
+# create a vector x and put three elements in the vector
+x <- c(1,2,4)
+# create a vector q and concatenate x into the vector together with a new element
+q <- c(x,x,8)
+# print vector x
+x
+# print the third element of vector x
+x[3]
+# extract a subset of vector x from second element to the third element
+x[2:3]
+# calculate the mean of all elements from x
+mean(x)
+# calculate the standard deviation from all elements in x
+sd(x)
+# give the mean value to a new variable y
+y <- mean(x)
+# print y
+y
+# list all R internal datasets
+data()
+# mean of data Nile
+mean(Nile)
+# standard deviation of data nile
+sd(Nile)
+# a histogram of data Nile
+hist(Nile)
+```
+
+```{r, eval=FALSE}
+# quit R
+q()
+```
+
+## 1.3 Introduction to Functions
+```{r}
+# write a function called oddcount that counts how many odd numbers in a vector
+oddcount <- function(x) {
+  k <- 0
+  for (n in x ){
+    if (n %% 2 == 1) {
+      k <- k + 1
+    }
+  }
+  return(k)
+}
+
+# test the function
+oddcount(c(1,3,5))
+oddcount(c(1,2,3,7,9))
+
+# calculate remainder of division
+38 %% 7
+# count odd numbers in the vector
+oddcount(c(1,2,3,7,9))
+```
+
+```{r, eval=F}
+# print a variable that only works within the function
+n
+```
+```{r}
+# a new vector z containing 3 numbers
+z <- c(2,6,7)
+# count odd numbers in vector z
+oddcount(z)
+# create a function f to add two numbers
+f <- function(x) return(x+y)
+# give 3 to varaible y
+y <- 3
+# call function f giving 5 as argument
+f(5)
+```
+```{r, eval=F}
+# create a function g with default arguments
+g <- function(x, y=2, z=T){ ... }
+# call function giving x=12,z=False, but y keeps the default value 2
+g(12, z=FALSE)
+```
+
+## 1.4 Preview of Some important R Data Structures
+```{r}
+# give 8 to scalar x
+x <- 8
+# print x
+x
+
+# create vector x containing 3 numbers
+x <- c(5,12,13)
+# print x
+x
+
+# print the number of scalars in a vector
+length(x)
+
+# print the type of an object
+mode(x)
+
+# create a character object
+y <- "abc"
+# length of the object
+length(y)
+# type of the elements in the object
+mode(y)
+
+# create a vector
+z <- c("abc", "29 88")
+# length of the vector
+length(z)
+# type of the elements in the object
+mode(z)
+
+# concatenate three scalars and put them into a string
+u <- paste("abc","de","f")
+# print u
+u
+# split string into a list with space as delimiter
+v <- strsplit(u, " ")
+# print list
+v
+```
+```{r}
+# create a matrix
+m <- rbind(c(1,4), c(2,2))
+# print m
+m
+# multiply matrix m with a vector 
+m %*% c(1,1)
+# retrieve the number from 1st row and 2nd column
+m[1,2]
+# retrieve the vector from the 2nd column
+m[,2]
+
+# create a list with two components
+x <- list(u=2, v="abc")
+# print list
+x
+# retrieve u component from list x
+x$u
+# store results of hist() into a list
+hn <- hist(Nile, plot=FALSE)
+print(hn)
+
+# print the structure of a list
+str(hn)
+```
+
+```{r}
+# create a data frame
+d <- data.frame(list(kids=c("Jack", "Jill"), ages=c(12,10)))
+# print data frame
+d
+# retrieve column ages
+d$ages
+```
+
+## 1.7 Getting help
+```{r, eval=F}
+# get help information of function seq()
+help(seq)
+# equivalent to the help()
+?seq
+# help information about an operator
+?"<"
+# help information about for loop
+?"for"
+# print example usage of seq() function
+example(seq)
+# print graphic example of persp() function
+example(persp)
+# google search for a function
+help.search("multivariate normal")
+# equivalent to above
+??"multivariate normal"
+# help of a package
+help(package=MASS)
+```
+
+# Assignment 2: List and mode transformations
+```{r}
+# a character vector
+c <- c("J","A","G","B","H","E","C","F","D","I")
+# a numeric vector
+n <- rnorm(10)
+# a matrix
+m <- matrix(1:100, nrow = 10, ncol = 10)
+# combine to a list
+mylist <- list(c=c,n=n,m=m)
+# sort all components in the list based on sorted character
+sorted_c <- sort(c)
+sorted_index <- match(sorted_c,mylist$c)
+sorted_mylist <- list()
+sorted_mylist$c <- mylist$c[sorted_index]
+sorted_mylist$n <- mylist$n[sorted_index]
+sorted_mylist$m <- mylist$m[sorted_index,]
+# multiplication
+second <- sorted_mylist$n
+third <- sorted_mylist$m
+multiMatrix <- second %*% third
+```
+
+# Assignment 3: Regression
+```{r, message=FALSE}
+# read data from url
+mushroom <- read.csv(url("http://archive.ics.uci.edu/ml/machine-learning-databases/mushroom/agaricus-lepiota.data"), header=F, sep=",", na.strings = "-")
+# check data levels
+sapply(mushroom, levels)
+# clean data
+library(tidyverse)
+mushroom_filter <- mushroom %>% select(-V17) %>% drop_na()
+# change response column from character to numeric variable and then factor variable
+mushroom_filter$V1 <- as.factor(mushroom_filter$V1)
+
+# split data into training and testing datasets
+train_row <- sample.int(nrow(mushroom_filter), size = nrow(mushroom_filter)*0.7, replace = FALSE)
+train_mush <- mushroom_filter[train_row,]
+test_mush <- mushroom_filter[-train_row,]
+# glm model again
+glm_model <- glm(V1~., data=train_mush, family = binomial)
+# likelihood ratio test
+anova(glm_model,test="LRT")
+# test data prediction
+glm_model_predict <- predict(glm_model,test_mush, type="response")
+plot(test_mush$V1,glm_model_predict)
+glm_model_pred <- rep("1", dim(test_mush)[1])
+glm_model_pred[glm_model_predict < 0.5] = "0"
+table(glm_model_pred, test_mush$V1)
+glm_PER<- 1 - mean(glm_model_pred == test_mush$V1)
+glm_PER
+
+# random Forest model
+library(randomForest)
+# training data
+model1 <- randomForest(V1~., data=train_mush, ntree=1000, mtry=6, importance=T)
+model1
+plot(model1)
+# prediction on testing data
+model1_predict <- predict(model1, test_mush)
+# validate the model
+table(model1_predict, test_mush$V1)
+mean(model1_predict == test_mush$V1)
+# Decision tree model
+library(rpart)
+# fit model
+model2 <- rpart(V1~., data=train_mush, method="class")
+# examine the model
+printcp(model2)
+plotcp(model2)
+summary(model2)
+# predict testing data
+model2_predict <- predict(model2, test_mush, type="class")
+# validate the model
+table(model2_predict, test_mush$V1)
+mean(model2_predict == test_mush$V1)
+```
+* Result: Rows with missing values were removed as well as column V17 which has only one level. glm model with training data tells that variable V2 to V13 have significant influence on the regression. glm got a prediction error rate 0 with the test data, which means this model is good enough for this data. RandomForest and Decision Tree gave 1 and 0.99 predictive accuracy.
+* Conclusion: All glm, DecisionTree and RandomForest gave reasonably good predictions, especially glm and RandomForest which could reach zero error rate. From at least this dataset, it suggests that we can determine if a mushroom is poisonous or not from the given variables.

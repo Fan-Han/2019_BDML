@@ -1,0 +1,166 @@
+---
+title: "Lab3-4"
+author: "Fan Han"
+date: "2/28/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+# Assignment 1: Regularization with ridge regression and the lasso for genome-wide prediction
+```{r}
+# load the data
+load("QTLMAS2010SNP.Rdata")
+load("QTLMAS2010Phen.Rdata")
+
+# create training and test data
+SNPdata <- cbind(SNP, phen)
+train_QTL <- SNPdata[1:2326,]
+test_QTL <- SNPdata[2327:3226,]
+
+# load library
+library(glmnet)
+
+# ridge shrinkage
+x <- train_QTL[,1:9723]
+y <- train_QTL[,9724]
+ridge_reg <- cv.glmnet(x, y, alpha = 0, nfolds=10)
+plot(ridge_reg)
+head(coef(ridge_reg, s="lambda.min"))
+ridge_reg$lambda.min
+min(ridge_reg$cvm)
+# ridge training prediction
+ridge_train_predict <- predict(ridge_reg, s="lambda.min", newx = x)
+# Sum of Squares total and error, and r square
+sst <- sum((y - mean(y))^2)
+sse <- sum((ridge_train_predict - y)^2)
+rsq <- 1 - sse/sst
+rsq
+# ridge test prediction
+ridge_test_prediction <- predict(ridge_reg,  s="lambda.min", newx=test_QTL[,1:9723])
+# MSE
+mse <- mean((ridge_test_prediction - test_QTL[,9724])^2)
+mse
+
+# Lasso shrinkage
+lasso_reg <- cv.glmnet(x, y, alpha=1, nfolds = 10)
+plot(lasso_reg)
+lasso_reg$lambda.min
+min(lasso_reg$cvm)
+# lasso training prediction
+lasso_train_predict <- predict(lasso_reg, s=60.10245, newx = x)
+# Sum of Squares total and error, and r square
+sst <- sum((y - mean(y))^2)
+sse <- sum((lasso_train_predict - y)^2)
+rsq <- 1 - sse/sst
+rsq
+# lasso test prediction
+lasso_test_prediction <- predict(lasso_reg, s=60.10245, newx=test_QTL[,1:9723])
+# MSE
+mse <- mean((lasso_test_prediction - test_QTL[,9724])^2)
+mse
+
+# Apparently ridge produces lower mse
+plot(ridge_reg$glmnet.fit, xvar="lambda", label=T)
+```
+
+# Assignment 2: Analysis of mortality rates using splines
+* 2a
+```{r}
+mydata <- read.csv("mortality_rate.csv", header=T, sep=";")
+mydata$LMR <- log(mydata$Rate)
+plot(mydata$Day, mydata$LMR, cex=0.2, xlab = "Day", ylab ="LMR", main = "")
+```
+* The trend does not seem follow an exponential mortality rate given the log-transformation. A log-transformed exponential regression should be close to a linear regression.
+
+* 2b
+```{r}
+# Fit natural cubic splines
+library(splines)
+Day <- mydata$Day
+LMR <- mydata$LMR
+# knots =  1, 2, 15, 50
+for (n in c(1,2,15,50)){
+c <- lm(LMR ~ ns(Day, df = n+1))
+new <- data.frame(Day = Day)
+c_prediction <- predict(c, new)
+
+# making plot
+{
+plot(Day, LMR, xlab="Day", ylab = "LMR", cex=0.2)
+lines(Day, c_prediction, col="red")
+points(attr(ns(Day, df=n+1), "knots"), predict(c, data.frame(Day = attr(ns(Day, df=n+1), "knots"))), col="blue", pch=15)
+}
+
+c_MSE <- mean((c_prediction - LMR)^2)
+
+print(paste0("cubic spline model with ", n, "knots: ", c_MSE))
+}
+```
+* The model with 50 knots gave the lowest predition error on this data.The prediction line in the plot is most consistent with the observations.
+
+* 2c
+```{r}
+# split the data into training and test data
+# repeat this ten times
+for (k in c(1,2,15,50)){
+  c_MSE=c()
+  for (i in 1:10){
+    # split the data
+    train_row <- sample.int(nrow(mydata), size = nrow(mydata)*0.7, replace = F)
+  train_LMR <- mydata[train_row,]
+  test_LMR <- mydata[-train_row,]
+  # fit model with k knots
+    c <- lm(LMR ~ ns(Day, df = k), data=train_LMR)
+    new <- data.frame(Day = test_LMR$Day)
+    c_prediction <- predict(c, new)
+    c_MSE <- c(c_MSE,  mean((c_prediction - test_LMR$LMR)^2))
+  }
+  mean_MSE <- mean(c_MSE)
+  print(paste0("Mean MSE with ",k, " knots: ", mean_MSE))
+}
+```
+* After 10 times splitting data into training and test sets for models with different knots, the model with 15 knots gave the lowest MSE.
+
+* 2d
+```{r}
+DF=c()
+Lambda=c()
+NK=c()
+MSE=c()
+for (i in 10:1){
+  # split the data
+    train_row <- sample.int(nrow(mydata), size = nrow(mydata)*0.7, replace = F)
+  train_LMR <- mydata[train_row,]
+  test_LMR <- mydata[-train_row,]
+  # fit smooth spline model on each training data
+  smooth_model <- smooth.spline(x = train_LMR$Day,  y = train_LMR$LMR)
+  new <- data.frame(Day = test_LMR$Day)
+  smooth_predict <- predict(smooth_model, new)
+
+  DoS <- smooth_model$df
+  DF <- c(DF, DoS)
+  lambda <- smooth_model$lambda
+  Lambda <- c(Lambda, lambda)
+  nk <- smooth_model$fit$nk
+  NK <- c(NK, nk)
+  smooth_mse <- mean((smooth_predict$y - test_LMR$LMR)^2)
+  MSE <- c(MSE, smooth_mse)
+
+}
+
+print(paste0("Average degrees of freedom: " , mean(DF)))
+print(paste0("Average lambda: " , mean(Lambda)))
+print(paste0("Average knots: " , mean(NK)))
+print(paste0("Average MSE: " , mean(MSE)))
+```
+* The average MSE from 10 times testing is about 0.11, which is lower than the 15 knots in the previous cubic splies model.
+
+```{r, fig.keep='all'}
+# plot for the first training data
+plot(smooth_model, cex=0.5)
+lines(smooth_model, col="blue")
+```
+
